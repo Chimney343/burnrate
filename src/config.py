@@ -49,6 +49,17 @@ class AppConfig(BaseSettings):
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
 
+class BigQueryConfig(AppConfig):
+    """Configuration for BigQuery uploads."""
+
+    # GCP settings
+    gcp_project_id: str = Field(default="", description="Google Cloud project ID")
+    bq_dataset: str = Field(default="burnrate_dev", description="BigQuery dataset name")
+
+    # Provider to upload
+    provider: str = Field(default="garmin", description="Provider to upload data for")
+
+
 class GarminConfig(AppConfig):
     """Configuration for Garmin API authentication and data storage."""
 
