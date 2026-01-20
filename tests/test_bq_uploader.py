@@ -7,8 +7,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.lib.bigquery import (
-    BigQueryUploader,
-    upload_provider_data,
+    BaseUploader,
+    GarminUploader,
+    get_uploader,
 )
 from src.lib.bigquery.schemas import (
     GARMIN_SCHEMAS,
@@ -64,7 +65,9 @@ class TestProviderSchemas:
             "devices",
             "device_last_used",
             "gear",
-            "health",
+            "health_stats",
+            "health_heart_rate",
+            "health_body_composition",
             "profile",
             "unit_system",
             "user_info",
@@ -90,7 +93,7 @@ class TestBigQueryUploader:
         return tmp_path
 
     def test_init_with_valid_provider(self, mock_client, temp_data_dir):
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -102,7 +105,7 @@ class TestBigQueryUploader:
 
     def test_init_with_invalid_provider_raises(self, mock_client, temp_data_dir):
         with pytest.raises(ValueError, match="Unknown provider"):
-            BigQueryUploader(
+            GarminUploader(
                 project_id="test-project",
                 dataset="test_dataset",
                 data_dir=temp_data_dir,
@@ -110,7 +113,7 @@ class TestBigQueryUploader:
             )
 
     def test_get_table_id(self, mock_client, temp_data_dir):
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="my-project",
             dataset="burnrate_dev",
             data_dir=temp_data_dir,
@@ -124,7 +127,7 @@ class TestBigQueryUploader:
         test_data = {"key": "value", "items": [1, 2, 3]}
         test_file.write_text(json.dumps(test_data), encoding="utf-8")
 
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -139,7 +142,7 @@ class TestBigQueryUploader:
         (activities_dir / "activity_123_details.json").write_text("{}")
         (activities_dir / "activity_456_details.json").write_text("{}")
 
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -162,7 +165,7 @@ class TestBigQueryUploader:
         test_data = [{"id": 1}, {"id": 2}]
         test_file.write_text(json.dumps(test_data), encoding="utf-8")
 
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -177,7 +180,7 @@ class TestBigQueryUploader:
         test_data = {"id": 1, "name": "test"}
         test_file.write_text(json.dumps(test_data), encoding="utf-8")
 
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -191,7 +194,7 @@ class TestBigQueryUploader:
         test_file = temp_data_dir / "test.json"
         test_file.write_text('"metric"', encoding="utf-8")
 
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -202,7 +205,7 @@ class TestBigQueryUploader:
         assert rows == [{"value": "metric"}]
 
     def test_upload_table_invalid_table_raises(self, mock_client, temp_data_dir):
-        uploader = BigQueryUploader(
+        uploader = GarminUploader(
             project_id="test-project",
             dataset="test_dataset",
             data_dir=temp_data_dir,
@@ -212,13 +215,13 @@ class TestBigQueryUploader:
             uploader.upload_table("nonexistent_table")
 
 
-class TestBigQueryUploaderFromConfig:
+class TestGetUploader:
     @pytest.fixture
     def mock_client(self):
         with patch("src.lib.bigquery.uploader.bigquery.Client") as mock:
             yield mock
 
-    def test_from_config_creates_uploader(self, mock_client, tmp_path):
+    def test_get_uploader_creates_garmin_uploader(self, mock_client, tmp_path):
         from src.config import BigQueryConfig
 
         config = BigQueryConfig(
@@ -228,14 +231,15 @@ class TestBigQueryUploaderFromConfig:
             data_dir=tmp_path,
         )
 
-        uploader = BigQueryUploader.from_config(config)
+        uploader = get_uploader(config)
 
+        assert isinstance(uploader, GarminUploader)
         assert uploader.project_id == "my-project"
         assert uploader.dataset == "burnrate_prod"
         assert uploader.provider == "garmin"
         assert uploader.data_dir == tmp_path
 
-    def test_from_config_raises_without_project_id(self, mock_client, tmp_path):
+    def test_get_uploader_raises_without_project_id(self, mock_client, tmp_path):
         from src.config import BigQueryConfig
 
         config = BigQueryConfig(
@@ -244,28 +248,17 @@ class TestBigQueryUploaderFromConfig:
         )
 
         with pytest.raises(ValueError, match="GCP_PROJECT_ID is required"):
-            BigQueryUploader.from_config(config)
+            get_uploader(config)
 
+    def test_get_uploader_raises_for_unknown_provider(self, mock_client, tmp_path):
+        from src.config import BigQueryConfig
 
-class TestUploadProviderData:
-    def test_creates_uploader_and_calls_upload_all(self):
-        with patch("src.lib.bigquery.uploader.BigQueryUploader") as mock_class:
-            mock_instance = MagicMock()
-            mock_instance.upload_all.return_value = {"activities": 100}
-            mock_class.return_value = mock_instance
+        config = BigQueryConfig(
+            gcp_project_id="my-project",
+            bq_dataset="burnrate_dev",
+            provider="unknown",
+            data_dir=tmp_path,
+        )
 
-            result = upload_provider_data(
-                project_id="test-project",
-                dataset="burnrate_dev",
-                data_dir=Path("/data"),
-                provider="garmin",
-            )
-
-            mock_class.assert_called_once_with(
-                project_id="test-project",
-                dataset="burnrate_dev",
-                data_dir=Path("/data"),
-                provider="garmin",
-            )
-            mock_instance.upload_all.assert_called_once()
-            assert result == {"activities": 100}
+        with pytest.raises(ValueError, match="No uploader implementation"):
+            get_uploader(config)

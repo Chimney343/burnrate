@@ -1,11 +1,12 @@
 """BigQuery integration package."""
 
 from .schemas import PROVIDER_SCHEMAS, TableConfig
-from .uploader import BigQueryUploader, upload_provider_data
+from .uploader import BaseUploader, GarminUploader, get_uploader
 
 __all__ = [
     "PROVIDER_SCHEMAS",
     "TableConfig", 
-    "BigQueryUploader",
-    "upload_provider_data",
+    "BaseUploader",
+    "GarminUploader",
+    "get_uploader",
 ]

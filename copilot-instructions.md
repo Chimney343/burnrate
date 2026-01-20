@@ -40,7 +40,7 @@ tqdm.write(f"[CACHED] {date_str}")  # Preserves progress bar
 
 - Use `logger.info()` for high-level progress (start/end of major operations)
 - Use `logger.debug()` for detailed per-item information
-- Use `tqdm.write()` when you need to log during a progress bar loop to avoid corrupting the display
+- **CRITICAL**: Do not use `logger.info()` or `print()` inside a `tqdm` loop. It causes the progress bar to duplicate on each update. If you must output text, use `tqdm.write("message")` or downgrade to `logger.debug()`.
 
 ## Date Range Handling
 

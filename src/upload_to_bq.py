@@ -11,7 +11,7 @@ import logging
 import sys
 
 from config import BigQueryConfig
-from lib.bigquery import BigQueryUploader
+from lib.bigquery import get_uploader
 
 
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def main() -> int:
         return 1
 
     try:
-        uploader = BigQueryUploader.from_config(config)
+        uploader = get_uploader(config)
         results = uploader.upload_all()
     except Exception as e:
         logger.error("Upload failed: %s", e)

@@ -3,7 +3,7 @@
 Provides base classes and utilities for multi-provider data downloading.
 """
 
-from .bigquery import BigQueryUploader
+from .bigquery import BaseUploader, GarminUploader, get_uploader
 from .providers import BaseDataProvider, DataProvider, DataProviderManager, DownloadResult
 
 __all__ = [
@@ -11,5 +11,7 @@ __all__ = [
     "BaseDataProvider",
     "DownloadResult",
     "DataProviderManager",
-    "BigQueryUploader",
+    "BaseUploader",
+    "GarminUploader",
+    "get_uploader",
 ]

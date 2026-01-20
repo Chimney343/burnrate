@@ -55,6 +55,7 @@ class BigQueryConfig(AppConfig):
     # GCP settings
     gcp_project_id: str = Field(default="", description="Google Cloud project ID")
     bq_dataset: str = Field(default="burnrate_dev", description="BigQuery dataset name")
+    google_application_credentials: str = Field(default="", description="Path to service account JSON file")
 
     # Provider to upload
     provider: str = Field(default="garmin", description="Provider to upload data for")
