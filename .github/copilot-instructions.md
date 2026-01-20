@@ -129,3 +129,131 @@ logger.error("Garmin credentials not found - set GARMIN_EMAIL and GARMIN_PASSWOR
 - Don't add "future-proofing" parameters nobody uses
 - Delete commented-out code instead of keeping "just in case"
 
+## Pythonic Patterns Used in This Codebase
+
+These patterns are already established in `src/` and should be followed for consistency:
+
+### Type Hints
+Use modern union syntax and generic types:
+```python
+# GOOD
+def get_client(self, force_refresh: bool = False) -> Garmin | None:
+    ...
+
+def _prepare_rows(self, files: list[Path]) -> list[dict[str, Any]]:
+    ...
+```
+
+### Dataclasses for Data Containers
+Use `@dataclass` for structured data with automatic `__init__`, `__repr__`, etc.:
+```python
+@dataclass
+class DownloadResult:
+    provider: str
+    success: bool = True
+    items_downloaded: dict[str, int] = field(default_factory=dict)
+```
+
+### Protocols for Duck Typing
+Use `Protocol` from `typing` when you want structural subtyping (duck typing with type safety):
+```python
+@runtime_checkable
+class DataProvider(Protocol):
+    PROVIDER: str
+    def download_all(self) -> DownloadResult: ...
+```
+
+### Factory Methods with `from_config()`
+Use `@classmethod` factory methods to create instances from configuration:
+```python
+@classmethod
+def from_config(cls, config: GarminConfig) -> GarminDataDownloader | None:
+    auth = GarminAuthenticator(...)
+    if not auth.get_client():
+        return None
+    return cls(api=auth, data_dir=config.data_dir, ...)
+```
+
+### Factory Functions for Polymorphism
+Use factory functions when the return type depends on input:
+```python
+def get_uploader(config: BigQueryConfig) -> BaseUploader:
+    if config.provider == "garmin":
+        return GarminUploader(...)
+    raise ValueError(f"No uploader for: {config.provider}")
+```
+
+### Pathlib Over Strings
+Always use `pathlib.Path` for file system operations:
+```python
+from pathlib import Path
+
+self.provider_dir = data_dir / "garmin"  # NOT: os.path.join(data_dir, "garmin")
+self.provider_dir.mkdir(parents=True, exist_ok=True)
+```
+
+### Module-Level Logger
+Define logger at module level, not inside classes:
+```python
+logger = logging.getLogger(__name__)
+
+class MyClass:
+    def method(self):
+        logger.info("message")  # NOT: self.logger.info()
+```
+
+### Private Methods with Underscore
+Prefix internal methods with `_`:
+```python
+def download_all(self):       # Public API
+    self._download_activities()  # Internal helper
+    self._download_health()
+```
+
+### `TYPE_CHECKING` for Circular Imports
+Use `if TYPE_CHECKING:` to avoid runtime circular imports:
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from config import BigQueryConfig
+
+def get_uploader(config: "BigQueryConfig") -> BaseUploader:
+    ...
+```
+
+### Generator Expressions in Aggregations
+Use generator expressions instead of list comprehensions when iterating once:
+```python
+# GOOD - no intermediate list created
+total = sum(r.duration_seconds for r in results.values() if r.success)
+
+# LESS GOOD - creates intermediate list
+total = sum([r.duration_seconds for r in results.values() if r.success])
+```
+
+### `__all__` in Package `__init__.py`
+Explicitly declare public API:
+```python
+# src/lib/providers/__init__.py
+from .base import BaseDataProvider, DataProvider, DownloadResult
+from .manager import DataProviderManager
+
+__all__ = [
+    "BaseDataProvider",
+    "DataProvider", 
+    "DownloadResult",
+    "DataProviderManager",
+]
+```
+
+### Pydantic for Configuration
+Use `pydantic_settings.BaseSettings` for env-based config:
+```python
+class AppConfig(BaseSettings):
+    data_dir: Path = Field(default_factory=lambda: Path.cwd() / "data")
+    log_level: str = Field(default="INFO")
+    
+    model_config = {"env_file": ".env", "extra": "ignore"}
+```
+
