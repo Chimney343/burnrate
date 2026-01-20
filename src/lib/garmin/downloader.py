@@ -6,13 +6,13 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Union
 
 from garminconnect import Garmin, GarminConnectConnectionError
 from garth.exc import GarthHTTPError, GarthException
 
 from lib.base import BaseDataProvider, DownloadResult
-from lib.garmin.auth import authenticate_garmin
+from lib.garmin.auth import GarminAuthenticator
 
 if TYPE_CHECKING:
     from config import GarminConfig
@@ -32,7 +32,7 @@ class GarminDataDownloader(BaseDataProvider):
 
     def __init__(
         self,
-        api: Garmin,
+        api: Union[Garmin, GarminAuthenticator],
         data_dir: Path,
         days_back: int = 30,
         download_activities: bool = True,
@@ -44,7 +44,7 @@ class GarminDataDownloader(BaseDataProvider):
         """Initialize downloader.
 
         Args:
-            api: Authenticated Garmin API client
+            api: Authenticated Garmin API client OR GarminAuthenticator instance
             data_dir: Root data directory
             days_back: Days of history to download (0 = all)
             download_activities: Whether to download activities
@@ -55,7 +55,14 @@ class GarminDataDownloader(BaseDataProvider):
         """
         super().__init__(data_dir)
         
-        self.api = api
+        # Handle both raw API client or Authenticator class
+        if hasattr(api, "get_client") and callable(api.get_client):
+            self._auth = api
+            self._api_client = None
+        else:
+            self._auth = None
+            self._api_client = api
+        
         self.days_back = days_back
         self.download_activities = download_activities
         self.download_health = download_health
@@ -69,6 +76,20 @@ class GarminDataDownloader(BaseDataProvider):
         self.devices_dir = self.provider_dir / "devices"
         self.gear_dir = self.provider_dir / "gear"
 
+    @property
+    def api(self) -> Garmin:
+        """Get the authenticated API client."""
+        if self._auth:
+            client = self._auth.get_client()
+            if not client:
+                raise GarminDownloaderException("Failed to retrieve authenticated client")
+            return client
+        
+        if self._api_client:
+            return self._api_client
+            
+        raise GarminDownloaderException("No API client or authenticator available")
+
     @classmethod
     def from_config(cls, config: GarminConfig) -> GarminDataDownloader | None:
         """Create a downloader instance from configuration.
@@ -81,18 +102,18 @@ class GarminDataDownloader(BaseDataProvider):
         Returns:
             Configured GarminDataDownloader or None if auth fails
         """
-        api = authenticate_garmin(
+        auth = GarminAuthenticator(
             email=config.garmin_email,
             password=config.garmin_password,
             token_store=config.token_store,
         )
         
-        if not api:
+        if not auth.get_client():
             logger.error("Failed to authenticate with Garmin")
             return None
             
         return cls(
-            api=api,
+            api=auth,
             data_dir=config.data_dir,
             days_back=config.days_back,
             download_activities=config.download_activities,
