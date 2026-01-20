@@ -3,13 +3,14 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, mock_open
+from unittest.mock import Mock, MagicMock, patch, mock_open, PropertyMock
 
 import pytest
 
 from src.lib.base import DownloadResult, DataProvider
 from src.lib.garmin.downloader import GarminDataDownloader
 from src.config import GarminConfig
+from src.lib.garmin.auth import GarminAuthenticator
 
 
 class TestGarminDataDownloaderFactory:
@@ -30,15 +31,17 @@ class TestGarminDataDownloaderFactory:
             activity_limit=100,
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
-            mock_api = MagicMock()
-            mock_auth.return_value = mock_api
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
+            mock_client = MagicMock()
+            mock_auth_instance.get_client.return_value = mock_client
 
             downloader = GarminDataDownloader.from_config(config)
 
             assert downloader is not None
             assert downloader.PROVIDER == "garmin"
-            mock_auth.assert_called_once()
+            MockAuth.assert_called_once()
+            mock_auth_instance.get_client.assert_called()
 
     def test_from_config_returns_none_on_auth_failure(self, tmp_path):
         """Test from_config returns None when authentication fails."""
@@ -49,8 +52,9 @@ class TestGarminDataDownloaderFactory:
             data_dir=str(tmp_path / "data"),
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
-            mock_auth.return_value = None
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
+            mock_auth_instance.get_client.return_value = None
 
             downloader = GarminDataDownloader.from_config(config)
 
@@ -69,9 +73,9 @@ class TestGarminDataDownloaderProtocol:
             data_dir=str(tmp_path / "data"),
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
-            mock_api = MagicMock()
-            mock_auth.return_value = mock_api
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
+            mock_auth_instance.get_client.return_value = MagicMock()
 
             downloader = GarminDataDownloader.from_config(config)
 
@@ -101,7 +105,8 @@ class TestGarminDataDownloaderDownloadAll:
             activity_limit=10,
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
             mock_api = MagicMock()
             mock_api.get_activities.return_value = []
             mock_api.get_device_alarms.return_value = None
@@ -114,7 +119,8 @@ class TestGarminDataDownloaderDownloadAll:
             mock_api.get_stress_data.return_value = {}
             mock_api.get_respiration_data.return_value = {}
             mock_api.get_stats.return_value = {}
-            mock_auth.return_value = mock_api
+            
+            mock_auth_instance.get_client.return_value = mock_api
 
             return GarminDataDownloader.from_config(config)
 
@@ -165,9 +171,10 @@ class TestGarminDataDownloaderConfigFlags:
             download_gear=False,
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
             mock_api = MagicMock()
-            mock_auth.return_value = mock_api
+            mock_auth_instance.get_client.return_value = mock_api
 
             downloader = GarminDataDownloader.from_config(config)
             result = downloader.download_all()
@@ -189,10 +196,11 @@ class TestGarminDataDownloaderConfigFlags:
             activity_limit=50,
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
             mock_api = MagicMock()
             mock_api.get_activities.return_value = []
-            mock_auth.return_value = mock_api
+            mock_auth_instance.get_client.return_value = mock_api
 
             downloader = GarminDataDownloader.from_config(config)
             downloader.download_all()
@@ -201,7 +209,7 @@ class TestGarminDataDownloaderConfigFlags:
             mock_api.get_activities.assert_called()
             call_args = mock_api.get_activities.call_args
             # Check limit parameter
-            assert call_args[1].get("limit") == 50 or 50 in call_args[0]
+            assert call_args[0][1] == 50 or call_args[1].get("limit") == 50
 
 
 class TestGarminDataDownloaderSubdirs:
@@ -216,9 +224,9 @@ class TestGarminDataDownloaderSubdirs:
             data_dir=str(tmp_path / "data"),
         )
 
-        with patch("src.lib.garmin.downloader.authenticate_garmin") as mock_auth:
-            mock_api = MagicMock()
-            mock_auth.return_value = mock_api
+        with patch("src.lib.garmin.downloader.GarminAuthenticator") as MockAuth:
+            mock_auth_instance = MockAuth.return_value
+            mock_auth_instance.get_client.return_value = MagicMock()
 
             downloader = GarminDataDownloader.from_config(config)
 
