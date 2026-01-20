@@ -207,7 +207,7 @@ class GarminDataDownloader(BaseDataProvider):
             full_name = self.api.get_full_name()
             self._save_json(self.provider_dir / "user_info.json", {"full_name": full_name})
 
-            logger.info("✓ User profile downloaded")
+            logger.info("User profile downloaded")
 
         except (GarthHTTPError, GarthException, GarminConnectConnectionError) as e:
             error_msg = f"Failed to download user profile: {e}"
@@ -255,7 +255,7 @@ class GarminDataDownloader(BaseDataProvider):
                 # Download detailed data for recent activities
                 self._download_activity_details(all_activities[:10])
 
-                logger.info(f"✓ Downloaded {len(all_activities)} activities")
+                logger.info(f"Downloaded {len(all_activities)} activities")
 
         except Exception as e:
             error_msg = f"Activity download failed: {e}"
@@ -380,7 +380,7 @@ class GarminDataDownloader(BaseDataProvider):
             cached = result.items_cached.get("health_days", 0)
             total = result.items_downloaded.get("health_days", 0)
             new = total - cached
-            logger.info(f"✓ Downloaded health data for {total} days ({new} new, {cached} cached)")
+            logger.info(f"Downloaded health data: {total} days ({new} new, {cached} cached)")
 
         except Exception as e:
             error_msg = f"Health data download failed: {e}"
@@ -397,7 +397,7 @@ class GarminDataDownloader(BaseDataProvider):
                 self._save_json(self.devices_dir / "devices.json", devices)
                 count = len(devices) if isinstance(devices, list) else 1
                 result.items_downloaded["devices"] = count
-                logger.info(f"✓ Downloaded {count} device(s)")
+                logger.info(f"Downloaded {count} device(s)")
 
             last_used = self._safe_api_call(lambda: self.api.get_device_last_used())
             if last_used:
@@ -428,19 +428,18 @@ class GarminDataDownloader(BaseDataProvider):
                 self._save_json(self.gear_dir / "gear_list.json", gear_list)
                 count = len(gear_list) if isinstance(gear_list, list) else 1
                 result.items_downloaded["gear"] = count
-                logger.info(f"✓ Downloaded {count} gear item(s)")
+                logger.info(f"Downloaded {count} gear item(s)")
 
         except Exception as e:
-            logger.debug(f"Gear download failed: {e}")
-            # Optional download, don't fail result for this, but maybe warn?
-            # result.warnings.append(f"Gear download failed: {e}")
+            logger.warning(f"Gear download failed: {e}")
 
     @staticmethod
     def _safe_api_call(func):
-        """Execute API call and return None on failure."""
+        """Execute API call, log and return None on failure."""
         try:
             return func()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"API call failed: {e}")
             return None
 
     @staticmethod

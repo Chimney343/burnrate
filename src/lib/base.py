@@ -96,7 +96,6 @@ class BaseDataProvider(ABC):
         self._setup_directories()
         
     def _setup_directories(self) -> None:
-        """Create provider directory structure."""
         self.provider_dir.mkdir(parents=True, exist_ok=True)
         for subdir in self.SUBDIRS:
             (self.provider_dir / subdir).mkdir(parents=True, exist_ok=True)

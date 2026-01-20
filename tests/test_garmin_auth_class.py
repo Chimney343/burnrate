@@ -31,7 +31,7 @@ class TestGarminAuthenticator:
         client = auth.get_client()
         assert client is mock_api
         assert auth._api is mock_api
-        mock_logger.info.assert_any_call("✓ Successfully authenticated using stored tokens")
+        mock_logger.info.assert_any_call("Authenticated using stored tokens")
 
     @patch("src.lib.garmin.auth.Garmin")
     def test_get_client_missing_creds(self, mock_garmin_class):
@@ -50,7 +50,7 @@ class TestGarminAuthenticator:
 
         client = auth.get_client()
         assert client is None
-        mock_logger.error.assert_any_call("Garmin credentials not found in configuration")
+        mock_logger.error.assert_any_call("Garmin credentials not found - set GARMIN_EMAIL and GARMIN_PASSWORD")
 
     @patch("src.lib.garmin.auth.Garmin")
     def test_get_client_login_flow(self, mock_garmin_class):

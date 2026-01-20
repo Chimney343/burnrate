@@ -60,7 +60,7 @@ def display_provider_result(logger: logging.Logger, result: DownloadResult) -> N
     logger.info(f"\n{result.provider.upper()}:")
     
     if not result.success:
-        logger.info(f"  ✗ Error: {result.error}")
+        logger.info(f"  Error: {result.error}")
         return
     
     # Display downloaded items
@@ -98,7 +98,7 @@ def main() -> int:
         logger.info("Configuration loaded.")
 
         logger.info("=" * 70)
-        logger.info("📊 Multi-Provider Data Downloader")
+        logger.info("Multi-Provider Data Downloader")
         logger.info("=" * 70)
         logger.info(f"Data directory: {config.data_dir}")
 

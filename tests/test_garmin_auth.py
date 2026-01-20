@@ -25,7 +25,7 @@ class TestAuthenticateGarmin:
         assert result is mock_api
         assert mock_logger.info.call_count >= 1
         mock_logger.info.assert_any_call(
-            "✓ Successfully authenticated using stored tokens"
+            "Authenticated using stored tokens"
         )
 
     @patch("src.lib.garmin.auth.Garmin")
@@ -45,7 +45,7 @@ class TestAuthenticateGarmin:
 
         assert result is None
         mock_logger.error.assert_any_call(
-            "Garmin credentials not found in configuration"
+            "Garmin credentials not found - set GARMIN_EMAIL and GARMIN_PASSWORD"
         )
 
     @patch("src.lib.garmin.auth.Garmin")
