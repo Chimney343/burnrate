@@ -4,9 +4,9 @@ import logging
 import sys
 
 from config import AppConfig, GarminConfig
-from lib.base import DownloadResult
-from lib.garmin import GarminDataDownloader
-from lib.provider_manager import DataProviderManager
+from lib.providers import DownloadResult
+from lib.providers.garmin import GarminDataDownloader
+from lib.providers import DataProviderManager
 
 
 def setup_logging(config: AppConfig) -> None:

@@ -2,13 +2,13 @@
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
-from src.lib.garmin.auth import authenticate_garmin
+from src.lib.providers.garmin.auth import authenticate_garmin
 
 
 class TestAuthenticateGarmin:
     """Test suite for authenticate_garmin function."""
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_authenticate_with_stored_tokens_success(self, mock_garmin_class):
         """Test successful authentication using stored tokens."""
         mock_api = MagicMock()
@@ -28,7 +28,7 @@ class TestAuthenticateGarmin:
             "Authenticated using stored tokens"
         )
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_authenticate_missing_credentials(self, mock_garmin_class):
         """Test authentication fails when credentials are missing."""
         mock_logger = Mock()
@@ -48,7 +48,7 @@ class TestAuthenticateGarmin:
             "Garmin credentials not found - set GARMIN_EMAIL and GARMIN_PASSWORD"
         )
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_authenticate_credential_login_success(self, mock_garmin_class):
         """Test successful credential-based login."""
         mock_api = MagicMock()
@@ -66,7 +66,7 @@ class TestAuthenticateGarmin:
 
         mock_garmin_class.assert_called()
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_authenticate_with_mfa_success(self, mock_garmin_class):
         """Test successful MFA authentication."""
         mock_api = MagicMock()
@@ -84,7 +84,7 @@ class TestAuthenticateGarmin:
 
         mock_api.resume_login.assert_called_with("mfa_token", "123456")
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_authenticate_general_exception(self, mock_garmin_class):
         """Test authentication handles general exceptions."""
         mock_garmin_class.side_effect = Exception("Network error")

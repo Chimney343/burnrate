@@ -11,8 +11,8 @@ from typing import Any, TYPE_CHECKING, Union
 from garminconnect import Garmin, GarminConnectConnectionError
 from garth.exc import GarthHTTPError, GarthException
 
-from lib.base import BaseDataProvider, DownloadResult
-from lib.garmin.auth import GarminAuthenticator
+from ..base import BaseDataProvider, DownloadResult
+from .auth import GarminAuthenticator
 
 if TYPE_CHECKING:
     from config import GarminConfig

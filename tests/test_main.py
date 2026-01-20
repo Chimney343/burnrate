@@ -7,7 +7,7 @@ from unittest.mock import Mock, MagicMock, patch
 
 import pytest
 
-from src.lib.base import DownloadResult
+from src.lib.providers.base import DownloadResult
 from src.main import setup_logging, display_provider_result
 from src.config import AppConfig
 

@@ -5,8 +5,8 @@ from unittest.mock import Mock, MagicMock
 
 import pytest
 
-from src.lib.base import DownloadResult, DataProvider
-from src.lib.provider_manager import DataProviderManager
+from src.lib.providers.base import DownloadResult, DataProvider
+from src.lib.providers.manager import DataProviderManager
 
 
 class TestDataProviderManagerRegistration:

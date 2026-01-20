@@ -11,7 +11,7 @@ import logging
 import sys
 
 from config import BigQueryConfig
-from lib.bq_uploader import BigQueryUploader
+from lib.bigquery import BigQueryUploader
 
 
 logger = logging.getLogger(__name__)

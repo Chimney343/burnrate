@@ -6,13 +6,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.lib.bq_uploader import (
+from src.lib.bigquery import (
     BigQueryUploader,
+    upload_provider_data,
+)
+from src.lib.bigquery.schemas import (
     GARMIN_SCHEMAS,
     PROVIDER_SCHEMAS,
     TableConfig,
     _make_schema,
-    upload_provider_data,
 )
 
 
@@ -74,7 +76,7 @@ class TestProviderSchemas:
 class TestBigQueryUploader:
     @pytest.fixture
     def mock_client(self):
-        with patch("src.lib.bq_uploader.bigquery.Client") as mock:
+        with patch("src.lib.bigquery.uploader.bigquery.Client") as mock:
             yield mock
 
     @pytest.fixture
@@ -213,7 +215,7 @@ class TestBigQueryUploader:
 class TestBigQueryUploaderFromConfig:
     @pytest.fixture
     def mock_client(self):
-        with patch("src.lib.bq_uploader.bigquery.Client") as mock:
+        with patch("src.lib.bigquery.uploader.bigquery.Client") as mock:
             yield mock
 
     def test_from_config_creates_uploader(self, mock_client, tmp_path):
@@ -247,7 +249,7 @@ class TestBigQueryUploaderFromConfig:
 
 class TestUploadProviderData:
     def test_creates_uploader_and_calls_upload_all(self):
-        with patch("src.lib.bq_uploader.BigQueryUploader") as mock_class:
+        with patch("src.lib.bigquery.uploader.BigQueryUploader") as mock_class:
             mock_instance = MagicMock()
             mock_instance.upload_all.return_value = {"activities": 100}
             mock_class.return_value = mock_instance

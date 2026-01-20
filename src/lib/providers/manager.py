@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from lib.base import DataProvider, DownloadResult
+from .base import DataProvider, DownloadResult
 
 logger = logging.getLogger(__name__)
 

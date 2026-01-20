@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from pathlib import Path
-from src.lib.base import DownloadResult, DataProvider, BaseDataProvider
+from src.lib.providers.base import DownloadResult, DataProvider, BaseDataProvider
 
 
 class TestDownloadResult:

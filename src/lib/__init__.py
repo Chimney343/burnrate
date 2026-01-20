@@ -3,9 +3,8 @@
 Provides base classes and utilities for multi-provider data downloading.
 """
 
-from .base import DataProvider, BaseDataProvider, DownloadResult
-from .bq_uploader import BigQueryUploader
-from .provider_manager import DataProviderManager
+from .bigquery import BigQueryUploader
+from .providers import BaseDataProvider, DataProvider, DataProviderManager, DownloadResult
 
 __all__ = [
     "DataProvider",

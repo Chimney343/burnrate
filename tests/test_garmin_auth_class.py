@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
-from src.lib.garmin.auth import GarminAuthenticator, authenticate_garmin
+from src.lib.providers.garmin.auth import GarminAuthenticator, authenticate_garmin
 
 
 class TestGarminAuthenticator:
@@ -14,7 +14,7 @@ class TestGarminAuthenticator:
         assert auth.email == "user"
         assert auth.password == "pass"
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_get_client_stored_tokens(self, mock_garmin_class):
         """Test successful authentication using stored tokens."""
         mock_api = MagicMock()
@@ -33,7 +33,7 @@ class TestGarminAuthenticator:
         assert auth._api is mock_api
         mock_logger.info.assert_any_call("Authenticated using stored tokens")
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_get_client_missing_creds(self, mock_garmin_class):
         """Test auth fails when missing credentials."""
         mock_api = MagicMock()
@@ -52,7 +52,7 @@ class TestGarminAuthenticator:
         assert client is None
         mock_logger.error.assert_any_call("Garmin credentials not found - set GARMIN_EMAIL and GARMIN_PASSWORD")
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_get_client_login_flow(self, mock_garmin_class):
         """Test successful login flow with password."""
         mock_api = MagicMock()
@@ -85,7 +85,7 @@ class TestGarminAuthenticator:
         assert client is cred_api
         cred_api.garth.dump.assert_called()
 
-    @patch("src.lib.garmin.auth.Garmin")
+    @patch("src.lib.providers.garmin.auth.Garmin")
     def test_compat_function(self, mock_garmin_class):
         """Test that authenticate_garmin wrapper still works."""
         mock_api = MagicMock()
