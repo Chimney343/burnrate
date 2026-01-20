@@ -48,6 +48,24 @@ setup:
 open-data:
     @if (Test-Path data) { Invoke-Item data } else { Write-Host "No data directory found" }
 
+# BigQuery upload configuration
+# TODO: Replace these placeholders with actual dataset names
+bq_project := "YOUR_GCP_PROJECT_ID"
+bq_dataset_dev := "burnrate_dev"
+bq_dataset_prod := "burnrate_prod"
+
+upload-bq-dev:
+    cd src; poetry run python upload_to_bq.py --project {{bq_project}} --dataset {{bq_dataset_dev}}
+
+upload-bq-prod:
+    cd src; poetry run python upload_to_bq.py --project {{bq_project}} --dataset {{bq_dataset_prod}}
+
+upload-bq-dev-debug:
+    cd src; poetry run python upload_to_bq.py --project {{bq_project}} --dataset {{bq_dataset_dev}} --log-level DEBUG
+
+upload-bq provider="garmin":
+    cd src; poetry run python upload_to_bq.py --project {{bq_project}} --dataset {{bq_dataset_dev}} --provider {{provider}}
+
 help:
     @Write-Host "Garmin Data Downloader Commands:"
     @Write-Host "  just download        - Run download with default settings"
@@ -58,6 +76,11 @@ help:
     @Write-Host "  just setup           - Create .env from template"
     @Write-Host "  just clean-all       - Clear data and tokens"
     @Write-Host "  just open-data       - Open data directory"
+    @Write-Host ""
+    @Write-Host "BigQuery Upload Commands:"
+    @Write-Host "  just upload-bq-dev   - Upload to dev dataset"
+    @Write-Host "  just upload-bq-prod  - Upload to prod dataset"
+    @Write-Host "  just upload-bq provider=strava - Upload specific provider"
 
 list:
     @just --list --unsorted
