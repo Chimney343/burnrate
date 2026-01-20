@@ -91,12 +91,11 @@ def main() -> int:
     logger = logging.getLogger(__name__)
 
     try:
-        # Load configuration
-        logger.info("Loading configuration...")
+        # Load configuration first, then setup logging
         config = GarminConfig()
-
-        # Setup logging with configured level
         setup_logging(config)
+        
+        logger.info("Configuration loaded.")
 
         logger.info("=" * 70)
         logger.info("📊 Multi-Provider Data Downloader")
