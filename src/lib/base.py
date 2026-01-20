@@ -104,7 +104,7 @@ class BaseDataProvider(ABC):
     @abstractmethod
     def download_all(self) -> DownloadResult:
         """Download all available data. Must be implemented by subclasses."""
-        ...
+        raise NotImplementedError("Subclasses must implement download_all()")
     
     def _create_result(self, success: bool = True) -> DownloadResult:
         """Create a new DownloadResult pre-populated with provider info."""
