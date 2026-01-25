@@ -6,10 +6,11 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, Callable, TYPE_CHECKING, TypeVar, Union
 
 from garminconnect import Garmin, GarminConnectConnectionError
 from garth.exc import GarthHTTPError, GarthException
+from tqdm import tqdm
 
 from ..base import BaseDataProvider, DownloadResult
 from .auth import GarminAuthenticator
@@ -330,7 +331,8 @@ class GarminDataDownloader(BaseDataProvider):
         try:
             logger.info(f"Date range: {start_date} to {end_date} ({days_to_check} days total)")
             
-            for i in range(days_to_check):
+            pbar = tqdm(range(days_to_check), desc="Health Data", unit="day")
+            for i in pbar:
                 current_date = start_date + timedelta(days=i)
                 date_str = current_date.isoformat()
 
@@ -340,13 +342,13 @@ class GarminDataDownloader(BaseDataProvider):
                 try:
                     daily_file = self.health_dir / f"health_{date_str}.json"
                     if daily_file.exists():
-                        logger.debug(f"[{i+1}/{days_to_check}] {date_str} (cached)")
+                        logger.debug(f"[CACHED] {date_str}")
                         health_summary[date_str] = {"cached": True}
                         result.items_downloaded["health_days"] += 1
                         result.items_cached["health_days"] += 1
                         continue
 
-                    logger.debug(f"[{i+1}/{days_to_check}] Fetching health data for {date_str}...")
+                    logger.debug(f"Fetching health data for {date_str}...")
 
                     stats = self._safe_api_call(lambda: self.api.get_stats(date_str))
                     heart_rate = self._safe_api_call(lambda: self.api.get_heart_rates(date_str))
@@ -369,9 +371,6 @@ class GarminDataDownloader(BaseDataProvider):
                             "has_body_composition": bool(body_composition),
                         }
                         result.items_downloaded["health_days"] += 1
-
-                    if (i + 1) % 7 == 0:
-                        logger.info(f"Downloaded health data for {i + 1}/{days_to_check} days")
 
                 except (GarthHTTPError, GarthException) as e:
                     logger.debug(f"Failed to download health data for {date_str}: {e}")
@@ -433,8 +432,10 @@ class GarminDataDownloader(BaseDataProvider):
         except Exception as e:
             logger.warning(f"Gear download failed: {e}")
 
+    _T = TypeVar("_T")
+
     @staticmethod
-    def _safe_api_call(func):
+    def _safe_api_call(func: Callable[[], _T]) -> _T | None:
         """Execute API call, log and return None on failure."""
         try:
             return func()

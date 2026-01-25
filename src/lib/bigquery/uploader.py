@@ -157,19 +157,21 @@ class BaseUploader:
 class GarminUploader(BaseUploader):
     """Garmin-specific uploader with custom flattening logic."""
     
+    def __init__(self, *args, **kwargs):
+        """Initialize uploader with a reusable HealthFlattener instance."""
+        super().__init__(*args, **kwargs)
+        self._health_flattener = HealthFlattener()
+    
     def _process_rows(self, table_name: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Apply health data flattening."""
         if table_name == "health_stats":
-            flattener = HealthFlattener()
-            rows = flattener.flatten_stats(rows)
+            rows = self._health_flattener.flatten_stats(rows)
             logger.debug("Flattened health stats from %d records", len(rows))
         elif table_name == "health_heart_rate":
-            flattener = HealthFlattener()
-            rows = flattener.flatten_heart_rate(rows)
+            rows = self._health_flattener.flatten_heart_rate(rows)
             logger.debug("Flattened health heart_rate from %d records", len(rows))
         elif table_name == "health_body_composition":
-            flattener = HealthFlattener()
-            rows = flattener.flatten_body_composition(rows)
+            rows = self._health_flattener.flatten_body_composition(rows)
             logger.debug("Flattened health body_composition from %d records", len(rows))
         
         return rows
