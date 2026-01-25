@@ -257,3 +257,129 @@ class AppConfig(BaseSettings):
     model_config = {"env_file": ".env", "extra": "ignore"}
 ```
 
+## Jupyter Notebooks
+
+Notebooks live in `notebooks/` and are used for exploratory data analysis (EDA), not production code.
+
+### Cell Structure
+
+Keep cells focused and executable independently:
+```python
+# GOOD - one logical unit per cell
+df = pd.read_json("../data/garmin/activities/all_activities.json")
+df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"])
+df.head()
+```
+
+```python
+# BAD - mixing unrelated operations
+df = pd.read_json("../data/garmin/activities/all_activities.json")
+df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"])
+# ... 50 lines later ...
+plt.figure(figsize=(12, 6))
+plt.plot(df["distance"])
+```
+
+### Imports
+
+Put all imports in the first code cell:
+```python
+# Cell 1 - always imports
+import pandas as pd
+import plotly.express as px
+from pathlib import Path
+```
+
+### Function Wrapping
+
+Wrap any code block with 5+ lines in a function to improve readability and reusability:
+```python
+# GOOD - wrapped in function
+def load_activities_data(data_dir: Path) -> pd.DataFrame:
+    df = pd.read_json(data_dir / "activities/all_activities.json")
+    df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"])
+    df["distance_km"] = df["distance"] / 1000
+    df["duration_min"] = df["duration"] / 60
+    return df
+
+DATA_DIR = Path("../data/garmin")
+df = load_activities_data(DATA_DIR)
+df.head()
+```
+
+```python
+# BAD - inline logic makes cells hard to test and reuse
+df = pd.read_json("../data/garmin/activities/all_activities.json")
+df["startTimeLocal"] = pd.to_datetime(df["startTimeLocal"])
+df["distance_km"] = df["distance"] / 1000
+df["duration_min"] = df["duration"] / 60
+df.head()
+```
+
+Benefits of function wrapping:
+- Easier to test the logic independently
+- Can reuse the same function in multiple cells
+- Clear function name documents what the code does
+- Type hints make inputs and outputs explicit
+- Easier to extract to `src/` if it becomes production code
+
+### Paths
+
+Use relative paths from the notebook location:
+```python
+# GOOD - relative to notebooks/
+DATA_DIR = Path("../data/garmin")
+df = pd.read_json(DATA_DIR / "activities/all_activities.json")
+
+# BAD - absolute paths break portability
+df = pd.read_json("C:/Users/mkkom/burnrate/data/garmin/activities/all_activities.json")
+```
+
+### Output Control
+
+Limit DataFrame output to avoid cluttering:
+```python
+# GOOD - explicit head/tail
+df.head(10)
+df.tail(5)
+df.sample(5)
+
+# GOOD - summary stats
+df.describe()
+df.info()
+
+# BAD - printing entire large DataFrames
+df  # Shows all 10,000 rows
+```
+
+### Visualization
+
+Use Plotly for interactive charts:
+```python
+import plotly.express as px
+
+fig = px.line(df, x="date", y="distance", title="Daily Distance")
+fig.show()
+```
+
+### Markdown Cells
+
+Use markdown cells to document analysis steps:
+- Describe what the next code cell does
+- Document findings and insights
+- Add section headers for navigation
+
+### Clean State Before Sharing
+
+Before committing or sharing:
+1. Restart kernel and run all cells (`Kernel > Restart & Run All`)
+2. Ensure cells execute in order without errors
+3. Clear unnecessary output for large datasets
+
+### Do NOT
+
+- Store credentials or secrets in notebooks
+- Use notebooks for production code (extract to `src/` instead)
+- Leave cells with errors in committed notebooks
+- Use `print()` when the last expression would display naturally
+
