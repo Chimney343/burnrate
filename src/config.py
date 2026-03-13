@@ -17,21 +17,13 @@ else:
 class AppConfig(BaseSettings):
     """Base application configuration shared across all providers."""
 
-    # Data storage paths
     data_dir: Path = Field(
         default_factory=lambda: Path.cwd() / "data",
-        description="Root directory to store all downloaded data"
     )
 
-    # Download settings
-    days_back: int = Field(
-        default=30, 
-        description="Days of history to download (use 0 for ALL data)"
-    )
-
-    # Logging
-    log_level: str = Field(default="INFO", description="Logging level")
-    log_file: Path | None = Field(default=None, description="Log file path")
+    days_back: int = Field(default=30)
+    log_level: str = Field(default="INFO")
+    log_file: Path | None = Field(default=None)
 
     model_config = {
         "env_file": _env_file, 
@@ -41,9 +33,7 @@ class AppConfig(BaseSettings):
     }
 
     def __init__(self, **data):
-        """Initialize config and ensure data directories exist."""
         super().__init__(**data)
-        # If data_dir is empty or current dir, use default
         if not self.data_dir or str(self.data_dir) == ".":
             self.data_dir = Path(__file__).parent.parent / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -52,31 +42,27 @@ class AppConfig(BaseSettings):
 class BigQueryConfig(AppConfig):
     """Configuration for BigQuery uploads."""
 
-    # GCP settings
-    gcp_project_id: str = Field(default="", description="Google Cloud project ID")
-    bq_dataset: str = Field(default="burnrate_dev", description="BigQuery dataset name")
-    google_application_credentials: str = Field(default="", description="Path to service account JSON file")
-
-    # Provider to upload
-    provider: str = Field(default="garmin", description="Provider to upload data for")
+    gcp_project_id: str = Field(default="")
+    bq_dataset: str = Field(default="burnrate_dev")
+    google_application_credentials: str = Field(default="")
+    provider: str = Field(default="garmin")
 
 
 class GarminConfig(AppConfig):
     """Configuration for Garmin API authentication and data storage."""
 
-    # Garmin API credentials
-    garmin_email: str = Field(default="", description="Garmin account email")
-    garmin_password: str = Field(default="", description="Garmin account password")
+    garmin_email: str = Field(default="")
+    garmin_password: str = Field(default="")
+    token_store: str = Field(default="~/.garminconnect")
+    download_activities: bool = Field(default=True)
+    download_health: bool = Field(default=True)
+    download_devices: bool = Field(default=True)
+    download_gear: bool = Field(default=True)
+    activity_limit: int = Field(default=100)
 
-    # Token storage
-    token_store: str = Field(
-        default="~/.garminconnect",
-        description="Path to store Garmin authentication tokens"
-    )
 
-    # Garmin-specific download settings
-    download_activities: bool = Field(default=True, description="Download activities")
-    download_health: bool = Field(default=True, description="Download health metrics")
-    download_devices: bool = Field(default=True, description="Download device info")
-    download_gear: bool = Field(default=True, description="Download gear/equipment")
-    activity_limit: int = Field(default=100, description="Activities per API request")
+class CronometerConfig(AppConfig):
+    """Configuration for Cronometer exports."""
+
+    cronometer_email: str = Field(default="")
+    cronometer_password: str = Field(default="")

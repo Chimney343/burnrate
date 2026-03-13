@@ -23,6 +23,9 @@ download-all:
 download-slow:
     cd src; $env:ACTIVITY_LIMIT = '50'; poetry run python main.py
 
+download-cronometer:
+    cd src; poetry run python -c "from config import CronometerConfig; from lib.providers.cronometer import CronometerDownloader; cfg=CronometerConfig(); d=CronometerDownloader.from_config(cfg); print(d.download_all())"
+
 quickstart:
     python QUICKSTART.py
 
